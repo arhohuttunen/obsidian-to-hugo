@@ -3,10 +3,12 @@ from dataclasses import dataclass
 
 from typing import List
 
+from obsidian_processor import ObsidianProcessor, ObsidianElement
+
 
 @dataclass
-class Callout:
-    callout: str
+class Callout(ObsidianElement):
+    matched_text: str
     type: str
     title: str
     lines: [str]
@@ -21,26 +23,20 @@ class Callout:
         return markdown
 
 
-def get_callouts(text: str) -> List[Callout]:
-    callouts = []
-    callouts_regex = r"\>\[!(.*)\]\s*(.*)?\n(?:\>.*\n)*"
-    for match in re.finditer(callouts_regex, text):
-        callout = match.group()
-        lines = []
-        line_regex = r"\>(.*)\n"
-        for inner in re.finditer(line_regex, callout):
-            lines.append(inner.group(1))
-        first = lines.pop(0)
-        title_regex = r"\[!(?:.*)\]\s*(.*)?"
-        title = re.match(title_regex, first)
+class CalloutProcessor(ObsidianProcessor):
+    def get_elements(self, text: str) -> List[Callout]:
+        callouts = []
+        callouts_regex = r"\>\[!(.*)\]\s*(.*)?\n(?:\>.*\n)*"
+        for match in re.finditer(callouts_regex, text):
+            callout = match.group()
+            lines = []
+            line_regex = r"\>(.*)\n"
+            for inner in re.finditer(line_regex, callout):
+                lines.append(inner.group(1))
+            first = lines.pop(0)
+            title_regex = r"\[!(?:.*)\]\s*(.*)?"
+            title = re.match(title_regex, first)
 
-        callout = Callout(match.group(), match.group(1), title.group(1), lines)
-        callouts.append(callout)
-    return callouts
-
-
-def replace_callouts(text: str) -> str:
-    callouts = get_callouts(text)
-    for callout in callouts:
-        text = text.replace(callout.callout, callout.build_hugo_markdown())
-    return text
+            callout = Callout(match.group(), match.group(1), title.group(1), lines)
+            callouts.append(callout)
+        return callouts

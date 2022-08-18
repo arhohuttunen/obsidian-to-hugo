@@ -2,11 +2,11 @@ import os
 import shutil
 from distutils.dir_util import copy_tree
 
-from callout_processor import replace_callouts
-from images_processor import replace_images
-from tweet_processor import replace_tweets
-from wiki_link_processor import replace_wiki_links
-from youtube_link_processor import replace_youtube_links
+from callout_processor import CalloutProcessor
+from image_processor import ImageProcessor
+from tweet_processor import TweetProcessor
+from wiki_link_processor import WikiLinkProcessor
+from youtube_link_processor import YoutubeLinkProcessor
 
 
 class ObsidianToHugo:
@@ -17,6 +17,13 @@ class ObsidianToHugo:
     ) -> None:
         self.obsidian_vault_dir = obsidian_vault_dir
         self.hugo_content_dir = hugo_content_dir
+        self.processors = [
+            WikiLinkProcessor(),
+            YoutubeLinkProcessor(),
+            ImageProcessor(),
+            TweetProcessor(),
+            CalloutProcessor()
+        ]
 
     def process(self) -> None:
         self.clear_hugo_content_dir()
@@ -39,10 +46,7 @@ class ObsidianToHugo:
                 if file.endswith(".md"):
                     with open(os.path.join(root, file), "r") as f:
                         text = f.read()
-                    text = replace_wiki_links(text)
-                    text = replace_youtube_links(text)
-                    text = replace_tweets(text)
-                    text = replace_images(text)
-                    text = replace_callouts(text)
+                    for processor in self.processors:
+                        text = processor.replace_elements(text)
                     with open(os.path.join(root, file), "w") as f:
                         f.write(text)
