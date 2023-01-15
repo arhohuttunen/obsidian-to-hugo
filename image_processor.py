@@ -21,6 +21,7 @@ class ImageProcessor(ObsidianProcessor):
         twitter_links = []
         twitter_links_regex = r"!\[(.*)\]\((.*)\)"
         for match in re.finditer(twitter_links_regex, text):
-            image = Image(match.group(), match.group(1), match.group(2))
+            filename = match.group(2).replace("_media/", "/")
+            image = Image(match.group(), match.group(1), filename)
             twitter_links.append(image)
         return twitter_links
